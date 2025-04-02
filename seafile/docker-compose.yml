@@ -1,0 +1,49 @@
+services:
+  mariadb:
+    image: lscr.io/linuxserver/mariadb:11.4.5
+    container_name: mariadb
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=seafile
+      - MYSQL_USER=seafile
+      - MYSQL_PASSWORD=${DB_USER_PASSWORD}
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      - seafile-net
+
+  memcached:
+    image: memcached:1.6.18
+    container_name: seafile-memcached
+    entrypoint: memcached -m 256
+    networks:
+      - seafile-net
+
+  seafile-client:
+    image: flrnnc/seafile-client:latest
+    volumes:
+      - library:/library
+      - client:/seafile
+    environment:
+      SEAF_SERVER_URL: "https://doc.silkandcypress.us/"
+      SEAF_USERNAME: "a_seafile_user"
+      SEAF_PASSWORD: ${SEAF_PASSWORD}
+      SEAF_LIBRARY: "documents"
+      UID: ${PUID}
+      GID: ${PGID}
+    depends_on:
+      - db
+      - memcached
+    networks:
+      - seafile-net
+
+volumes:
+  library: /mnt/host_storage/seafile/library
+  db: /mnt/host_storage/seafile/db
+  client: /mnt/host_storage/seafile/client
+
+networks:
+  seafile-net:
